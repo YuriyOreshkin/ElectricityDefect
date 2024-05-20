@@ -1,3 +1,3 @@
-# Einstein
+# Electricity Defect
 
-http://einstein.frisha.ru/
+Electrical network parameters monitoring system
