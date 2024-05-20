@@ -1,0 +1,107 @@
+﻿@model ElectricityDefect.WebUI.Models.IncidentViewModel
+    <script>
+        function filterObjekt() {
+
+            var dropdownlist = $("#n_sh").data("kendoDropDownList");
+            var filter = dropdownlist.filterInput;
+            
+            return
+            {
+                n_ob: $("#n_ob").val(),
+                text: filter.val()
+            }
+        }
+    </script>
+<script id="timesTemplate" type="text/x-kendo-template">
+    <span>#: kendo.toString(kendo.parseDate(Start),"HH:mm") # - #: kendo.toString(kendo.parseDate(End),"HH:mm") #</span>
+</script>
+<div style="margin: 0 15px">
+
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="eventid">Объект:</label>
+        <span class="k-form-field-wrap">
+            @(Html.Kendo().DropDownListFor(m => m.n_ob)
+                .HtmlAttributes(new { style = "width:100%;" })
+                .DataTextField("name")
+                .DataValueField("id")
+                .Template("<span>#:id# - #:name#</span>")
+                .Filter("contains")
+                .DataSource(source => source.Read(read => read.Action("DropDownListReadObjekts", "ParametersSetiService")).ServerFiltering(true))
+                //.Events(ev => ev.Select("onDropDownListEventsNamesChange"))
+            )
+        </span>
+    </div>
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="eventid">Фидер:</label>
+        <span class="k-form-field-wrap">
+            @(Html.Kendo().DropDownListFor(m => m.n_sh)
+                .HtmlAttributes(new { style = "width:100%;" })
+                .DataTextField("name")
+                .DataValueField("id")
+                .Template("<span>#:id# - #:name#</span>")
+                .Filter("contains")
+                .AutoBind(false)
+                .Enable(false)
+                .DataSource(source => source.Read(read => read.Action("DropDownListReadSHs", "ParametersSetiService").Data("filterObjekt")).ServerFiltering(true))
+                .CascadeFrom("n_ob")
+                //.Events(ev => ev.Select("onDropDownListEventsNamesChange"))
+            )
+        </span>
+    </div>
+    @*<div class="k-form-field">
+        <label class="k-label k-form-label" for="eventid">Фаза:</label>
+        <span class="k-form-field-wrap">
+            @(Html.Kendo().DropDownListFor(m => m.fasa)
+                .HtmlAttributes(new { style = "width:100%;" })
+                .DataTextField("Text")
+                .DataValueField("Value")
+                .BindTo(new List<SelectListItem>() {
+                    new SelectListItem()
+                    {
+                        Text="A",
+                        Value="1"
+                    },
+                    new SelectListItem()
+                    {
+                        Text="B",
+                        Value="2"
+                    },
+                     new SelectListItem()
+                    {
+                        Text="C",
+                        Value="3"
+                    }
+                })
+
+            )
+        </span>
+    </div>*@
+    <div class="k-block">
+        <div style="padding:  0 10px;">
+            <div class="k-form-field">
+                <label class="k-label k-form-label" for="begin">Начало:</label>
+                <div class="k-form-field-wrap">
+                    @(Html.Kendo().DateTimePickerFor(m => m.begin).HtmlAttributes(new { style = "width:100%;" }))
+
+                </div>
+                <span class="k-invalid-msg" data-for="begin"></span>
+            </div>
+            <div class="k-form-field">
+                <label class="k-label k-form-label" for="end">Окончание:</label>
+                <div class="k-form-field-wrap">
+                    @(Html.Kendo().DateTimePickerFor(m => m.end).HtmlAttributes(new { style = "width:100%;" }))
+                </div>
+                <span class="k-invalid-msg" data-for="end"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="k-form-field field-show">
+        <label class="k-label k-form-label" for="comment">Описание события:</label>
+        <div class="k-form-field-wrap">
+            @Html.TextAreaFor(m => m.comment, new { style = "width:100%", @class = "k-textbox" })
+        </div>
+        <span class="k-invalid-msg" data-for="description"></span>
+    </div>
+
+</div>

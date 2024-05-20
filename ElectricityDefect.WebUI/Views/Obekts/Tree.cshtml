@@ -1,0 +1,167 @@
+﻿ <aside class="main-sidebar">
+     <div class="k-header k-grid-toolbar k-grid-top">
+        <div id="filter-searcher" class="filter-section">
+            <span class="k-textbox k-space-left" style="width: 100%;">
+                @(Html.Kendo().TextBox().Name("searchbox").HtmlAttributes(new { placeholder = "Поиск" }))
+                <span class="k-icon k-i-search"></span>
+            </span>
+        </div>
+    </div>
+    <div class="content">
+        @(Html.Kendo().TreeView()
+                                                                                    .Name("objectsTreeView")
+                                                                                    .DataTextField("name")
+                                                                                    .HtmlAttributes(new { style = "height:100%;" })
+                                                                                    .Checkboxes(chk=>chk.CheckChildren(true))
+                                                                                    //.TemplateId("treeview-template")
+                                                                                    .LoadOnDemand(false)
+                                                                                    .Events(ev =>
+                                                                                    {
+                                                                                        ev.Check("onTreeNodeCheck");
+                                                                                    })
+                                                                                    .ExpandAll(true)
+                                                                                    .DataSource(dataSource =>
+                                                                                    {
+                                                                                        dataSource.Read(read => read.Action("TreeRead", "ParametersSetiService"));
+                                                                                        dataSource.Model(model => model.Id("id").HasChildren("hasChildren"));
+
+                                                                                    })
+            )
+    </div>
+</aside>
+<script>
+
+    function RefreshData() {
+        var range = GetDateRange();
+        var dateBegin = range.start;
+        var dateEnd = range.end;
+        if ((dateBegin != null || dateBegin != undefined) && (dateEnd != null || dateEnd != undefined)) {
+            GetRefreshElements().forEach(function (element) {
+                element.dataSource.read();
+            })
+        }
+    }
+
+
+    function GetCheckedItemsTree() {
+        var result = [];
+        //get reference to the TreeView widget
+        var treeview = $("#objectsTreeView").data("kendoTreeView");
+        //get the checked items
+        var items = $("#objectsTreeView .k-item input[type=checkbox]:checked").closest(".k-item");
+        $(items).each(function (index, element) {
+            var id = treeview.dataItem(element).id
+            result.push(id);
+
+        });
+        return result;
+    }
+
+    function onTreeNodeCheck()
+    {
+        var grid = $("#testSetisGrid").data('kendoGrid');
+        var dataSource = grid.dataSource;
+        dataSource.read();
+    }
+
+    $("#searchbox").on("input", function () {
+
+        var query = this.value.toLowerCase();
+
+        var dataSource = $("#objectsTreeView").data("kendoTreeView").dataSource;
+
+
+
+        filter(dataSource, query);
+
+    });
+
+    function filter(dataSource, query) {
+
+        var hasVisibleChildren = false;
+
+        var data = dataSource instanceof kendo.data.HierarchicalDataSource && dataSource.data();
+
+
+
+        for (var i = 0; i < data.length; i++) {
+
+            var item = data[i];
+            var text = item.name.toLowerCase();
+
+            var itemVisible =
+
+                query === true // parent already matches
+
+                || query === "" // query is empty
+
+                || text.indexOf(query) >= 0; // item text matches query
+
+
+
+            var anyVisibleChildren = filter(item.children, itemVisible || query); // pass true if parent matches
+
+
+
+            hasVisibleChildren = hasVisibleChildren || anyVisibleChildren || itemVisible;
+
+
+
+            item.hidden = !itemVisible && !anyVisibleChildren;
+
+        }
+
+
+
+        if (data) {
+
+            // Re-apply the filter on the children.
+
+            dataSource.filter({ field: "hidden", operator: "neq", value: true });
+
+        }
+
+
+
+        return hasVisibleChildren;
+
+    }
+
+    $(document).ready(function () {
+
+        $(window).resize();
+
+    });
+
+    $(window).resize(function () {
+
+        var height = $(window).outerHeight() - 62-48;
+        var tree = $("#objectsTreeView").data("kendoTreeView");
+        setSGridHeight(tree, height);
+    });
+       
+ 
+
+</script>
+        <style>
+            .filter-section {
+                margin: .16em;
+                vertical-align: middle;
+            }
+            
+            .regulation-action {
+                cursor: pointer;
+            }
+            .badge-count {
+                padding: 2px;
+                border-width: 1px;
+                font-size: 11px;
+                line-height: 1;
+                border-color: #818181;
+                color: #fff;
+                background-color: #818181;
+            }
+            .k-notification-error {
+                max-width: 500px;
+            }
+        </style>

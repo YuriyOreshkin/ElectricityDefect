@@ -1,0 +1,58 @@
+﻿
+@{
+    ViewData["Title"] = "Параметры электросети";
+
+}
+
+@(Html.Kendo().Splitter()
+             .Name("horizontal")
+             .Orientation(SplitterOrientation.Horizontal)
+             .HtmlAttributes(new { style = "height: 100%" })
+             .Panes(horizontalPanes =>
+             {
+             horizontalPanes.Add()
+                           .HtmlAttributes(new { id = "objects-pane" })
+                           //.Size("280px")
+                           .MinSize("250px")
+                           .Scrollable(false)
+                           .Collapsible(false)
+                           .Content(@<div class="pane-conten" style="height:100%;">@Html.Partial("~/Views/Obekts/Tree.cshtml")</div>);
+
+
+             horizontalPanes.Add()
+                              .HtmlAttributes(new { id = "parameters-pane" })
+                              .Scrollable(false)
+                              .Collapsible(false)
+                              .Content(@<div class="pane-content" style="height:100%;">@Html.Partial("~/Views/ParametersSeti/Grid.cshtml")</div>);
+
+                   })
+                   .Events(ev=>ev.Resize("onResize"))
+)
+<script>
+   
+    $(document).ready(function () {
+        var splitter = $("#horizontal").data("kendoSplitter");
+
+        var size = localStorage.getItem('sidebar_width');
+        if (size) {
+            splitter.size(".k-pane:first", size);
+        }
+        else {
+            //default
+            splitter.size(".k-pane:first", "280px");
+        }
+    })
+
+
+    
+
+    function onResize(e) {
+        
+        var splitter = $("#horizontal").data("kendoSplitter");
+        var size = splitter.size(".k-pane:first");
+        if (size) {
+            localStorage.setItem('sidebar_width', size);
+        }
+        
+    }
+</script>

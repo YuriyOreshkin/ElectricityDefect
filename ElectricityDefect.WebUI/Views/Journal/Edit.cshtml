@@ -1,0 +1,62 @@
+﻿@model ElectricityDefect.WebUI.Models.IncidentViewModel
+<script>
+    function ShowMessage(e) {
+
+        if (e.Errors) {
+            var message = "<strong>Ошибки:</strong>";
+            message += "<ul>"
+            $.each(e.Errors, function (key, value) {
+
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += "<li>" + this + "<br></li>";
+                    });
+                }
+            });
+            message += "</ul>"
+            showError(message, true);
+
+        }
+        else {
+
+            showSuccess("Событие успешно создано!", false);
+            closeWindow();
+            toolTipRefresh();
+        }
+    }
+
+    function SaveIncident(e) {
+
+        var validator = $("#incident").kendoValidator().data("kendoValidator");
+
+        if (validator.validate()) {
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("CreateIncident", "IncidentService") ",
+                datatype: 'json',
+                data: $('#incident').serialize(),
+                success: function (data) {
+
+                    ShowMessage(data);
+
+                    },
+                error: function (xhr, ajaxOptions, thrownError) {
+
+                    showError(xhr.status + " " + thrownError);
+                    }
+            });
+
+        }
+    }
+
+</script>
+<div class="k-edit-form-container" style="margin-left:auto;margin-right:auto;max-width:600px;">
+    <form id="incident" style="height:100%">
+            @Html.Partial("~/Views/Shared/EditorTemplates/Incident.cshtml", Model)
+    </form>
+        <div class="k-edit-buttons k-state-default">
+                @(Html.Kendo().Button().Name("Save").Tag("div").HtmlAttributes(new { type = "button", @class = "k-primary" }).Icon("check").Content("Сохранить").Events(ev => ev.Click("SaveIncident")))
+        </div>
+    
+</div>

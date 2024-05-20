@@ -1,0 +1,181 @@
+﻿@(Html.Kendo().Grid<ElectricityDefect.WebUI.Models.TestSetiViewModel>()
+                                            .Name("testSetisGrid")
+                                            .HtmlAttributes(new { style = "height:100%;" })
+                                            .AutoBind(true)
+                                            .Resizable(resize => resize.Columns(true))
+                                            .ToolBar(toolbar =>
+                                                    {
+                                                        toolbar.Template( @<text>
+                                                            <div style="margin-top: 0.5em;display: inline-block ">
+
+                                                                @(Html.Kendo().CheckBox().Name("CheckBoxOfr").Checked(false).Label("Показывать только инциденты").HtmlAttributes(new { onchange= "onTreeNodeCheck()" }))
+
+                                                            </div>
+
+                                                            <div style="float:right;margin: .16em; vertical-align: middle;">
+                                                                <label class="period-label" for="period" style=" padding-right: .40em; margin-top: 0.30em;">Период:</label>
+                                                                @(Html.Kendo().DateTimePicker().Name("DateTimePickerBegin").Culture("ru-RU").Value(DateTime.Now.Date.Add(new TimeSpan(0,0,0))).Events(ev => ev.Change("onTreeNodeCheck")))
+                                                                @(Html.Kendo().DateTimePicker().Name("DateTimePickerEnd").Culture("ru-RU").Value(DateTime.Now.Date.Add(new TimeSpan(23,59,59))).Events(ev => ev.Change("onTreeNodeCheck")))
+                                                            </div>
+                                                        </text>);
+                                            })
+                                                .Columns(columns =>
+                                                {
+                                                    columns.Bound(p => p.n_sh);
+                                                    columns.Bound(p => p.testtime).Width(200).Format("{0: dd.MM.yyyy HH:mm:ss}").Filterable(false).ClientTemplate("<span>#=kendo.toString(testtime,'dd.MM.yyyy HH:mm:ss')#</span>#if(FasaDefect('abc',data)) { #<span class='k-icon k-i-info' data-n_sh=#=n_sh# data-testtime=#=kendo.toString(testtime,'dd.MM.yyyyHH:mm:ss')# style='margin-left:10px;margin-bottom:5px;font-size:21px;color: #if(data.incident) {# \\#0caf63 # } else { # \\#d51923; #}#'></span>#}#");
+                                                    columns.Bound(p => p.ua).ClientTemplate("<div #if(FasaDefect('a',data)) {# class='display-tooltip' title='Диапазон допустимых значений от #=uamin# до #=uamax#' #}#>#=ua#</div>");
+                                                    columns.Bound(p => p.ub).ClientTemplate("<div #if(FasaDefect('b',data)) {# class='display-tooltip' title='Диапазон допустимых значений от #=ubmin# до #=ubmax#' #}#>#=ub#</div>"); ;
+                                                    columns.Bound(p => p.uc).ClientTemplate("<div #if(FasaDefect('c',data)) {# class='display-tooltip' title='Диапазон допустимых значений от #=ucmin# до #=ucmax#' #}#>#=uc#</div>"); ;
+
+                                                })
+
+                                                .Sortable()
+                                                .PersistSelection()
+                                                .Filterable()
+                                                .Pageable(page=>page.Refresh(true).PageSizes(new List<int> { 50 , 100}))
+                                                .Selectable()
+                                                .Scrollable()
+                                                .Events(ev=>ev.DataBound("onDataBound"))
+                                                .DataSource(dataSource => dataSource
+                                                    .Ajax()
+                                                    .PageSize(50)
+                                                    .Read(read => read.Action("GridRead", "ParametersSetiService").Data("ReadDatesPeriod"))
+                                                    .Events(events => events.Error("error_handler"))
+                                                )
+
+)
+@(Html.Kendo().Tooltip()
+        .For("#testSetisGrid")
+        .Filter(".display-tooltip")
+        .Position(TooltipPosition.Bottom)
+    )
+@(Html.Kendo().Tooltip()
+        .For("#testSetisGrid")
+        .Filter(".k-i-info")
+        .LoadContentFrom("TooltipIncident","ParametersSetiService")
+        .Position(TooltipPosition.Bottom)
+        .Events(ev=>ev.RequestStart("ttRequestStart"))
+    )
+
+@(Html.Kendo().Window()
+                                                       .Name("window")
+                                                       .Modal(true)
+                                                       .Visible(false)
+                                                       .Draggable()
+                                                       .Width(400)
+                                                       .HtmlAttributes(new { @class = "k-popup-edit-form", style= "min-height:400px;" })
+
+    )
+
+<script>
+
+    function ttRequestStart(e) {
+        e.options.data = {
+            n_sh: e.target.data("n_sh"),
+            testtime: e.target.data("testtime")
+        }
+
+    }
+
+    function SetStyle(cell) {
+        cell.style.color = "Red"
+    }
+
+    function FasaDefect(fasa, dataItem) {
+        //fasa='a';'b';'c';'abc';
+
+        if (fasa.includes("a")) {
+            if ((dataItem.uamin && dataItem.ua < dataItem.uamin) || (dataItem.uamax && dataItem.ua > dataItem.uamax)) {
+
+                return true;
+            }
+        }
+
+        if (fasa.includes("b")) {
+            if ((dataItem.ubmin && dataItem.ub < dataItem.ubmin) || (dataItem.ubmax && dataItem.ub > dataItem.ubmax)) {
+
+                return true;
+            }
+        }
+
+        if (fasa.includes("c")) {
+            if ((dataItem.ucmin && dataItem.uc < dataItem.ucmin) || (dataItem.ucmax && dataItem.uc > dataItem.ucmax)) {
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function onDataBound(e) {
+        var rows = e.sender.tbody.children();
+        for (var j = 0; j < rows.length; j++) {
+            var row = $(rows[j]);
+            var dataItem = e.sender.dataItem(row);
+
+            if (FasaDefect("a", dataItem)) {
+                SetStyle(row[0].cells[2])
+            }
+
+
+            if (FasaDefect("b", dataItem)) {
+                SetStyle(row[0].cells[3])
+            }
+
+            if (FasaDefect("c", dataItem)) {
+                SetStyle(row[0].cells[4])
+            }
+
+        }
+    }
+
+
+    //Get parameters for Grid
+    function ReadDatesPeriod() {
+
+        var points = GetCheckedItemsTree();
+        var pickerbegin = $("#DateTimePickerBegin").data("kendoDateTimePicker");
+        var pickerend = $("#DateTimePickerEnd").data("kendoDateTimePicker");
+        var dateBegin = pickerbegin.value();
+        var dateEnd = pickerend.value();
+        var ofr = $("#CheckBoxOfr").prop('checked');
+
+        return { points: points, datebegin: dateBegin.toJSON(), dateend: dateEnd.toJSON(), ofr: ofr }
+    }
+    
+    function addIncident(n_sh,time) {
+
+        var param = { id: 0, n_sh: n_sh, begin: time, end: time};
+
+        showWindows("Событие", "@Url.Action("ShowToAddIncident", "IncidentService")", param);
+    }
+
+
+
+    function showWindows(title, url, data) {
+        var wnd = $("#window").data("kendoWindow");
+
+        //Clean content
+        wnd.content("");
+        //Set title
+        wnd.title(title);
+        //Load content
+      
+        wnd.refresh({
+            url: url,
+            type: "POST",
+            datatype: "json",
+            data: data
+        }).center().open();
+
+       
+    }
+    function closeWindow(e) {
+        $("#window").data("kendoWindow").close();
+    }
+
+    function toolTipRefresh(e) {
+        $("#testSetisGrid").data("kendoTooltip").refresh();
+    }
+</script>
+

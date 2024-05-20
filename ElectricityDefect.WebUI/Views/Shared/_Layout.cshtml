@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html> 
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="~/favicon.png" sizes="36x36">
+    <title>@ViewBag.Title</title>
+
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    @Scripts.Render("~/bundles/kendo")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" type="text/css" />
+    <link href="@Url.Content("~/Content/Site.css")" rel="stylesheet" type="text/css" />
+    <script src="@Url.Content("~/Scripts/kendo/2019.3.1023/jszip.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+    <script>
+        kendo.culture("ru-RU");
+    </script>
+</head>
+<body>
+    <header class="main-header">
+        <a href="@Url.Action("Index", "ParametersSeti")">
+            <h1 class="logo">
+                <img src="~/Content/Images/logo.png" />
+            </h1>
+        </a>
+        @(Html.Kendo().Menu()
+                                              .Name("mainMenu")
+                                              .Items(items =>
+                                              {
+                                                  items.Add().Text("Параметры электросети").Action("Index", "ParametersSeti");
+                                                  items.Add().Text("Журнал").Action("Index", "Journal");
+                                                  items.Add().Text("Настройка").Action("Index", "Limits");
+                                                  items.Add().Text("Почта").Action("Index", "Mail");
+                                                  
+                                              })
+        )
+
+    </header>
+    <div style="position: fixed; top: 59px; left: 0; width: 100%; height: 94%; margin-bottom:5px;">
+        @RenderBody()
+    </div>
+
+
+    @(Html.Kendo().Notification()
+               .Name("notification")
+               .Stacking(NotificationStackingSettings.Down)
+               .Position(pos => pos.Top(30))
+               .AutoHideAfter(0)
+               .Button(true)
+    )
+
+</body>
+   
+</html>
+<script>
+ 
+    function onShow(e) {
+        if (e.sender.getNotifications().length == 1) {
+            var element = e.element.parent(),
+                eWidth = element.width(),
+                eHeight = element.height(),
+                wWidth = $(window).width(),
+                wHeight = $(window).height(),
+                newTop, newLeft;
+
+            newLeft = Math.floor(wWidth / 2 - eWidth / 2);
+            newTop = Math.floor(wHeight / 2 - eHeight / 2);
+
+            e.element.parent().css({ top: newTop, left: newLeft });
+        }
+    }
+
+    function Centered(notification)
+    {
+        notification.bind("show", onShow);
+    }
+
+    function showSuccess(message,center)
+    {
+        
+        var notification = $("#notification").data("kendoNotification");
+        notification.setOptions({
+
+            autoHideAfter: 4000
+        });
+
+        if (center)
+        {
+            Centered(notification);
+        }
+        notification.show(message, "success");
+    }
+
+    function showError(message, center)
+    {
+        var notification = $("#notification").data("kendoNotification");
+        if (center) {
+            Centered(notification);
+        }
+        notification.show(message, "error");
+
+    }
+
+    function showInfo(message) {
+        var notification = $("#notification").data("kendoNotification");
+        notification.setOptions({
+
+            autoHideAfter: 4000
+        });
+        notification.show(message, "info");
+
+    }
+
+    //Show Errors
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "<strong>Ошибки:</strong>";
+            message += "<ul>"
+            $.each(e.errors, function (key, value) {
+
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += "<li>" + this + "<br></li>";
+                    });
+                }
+            });
+            message += "</ul>"
+            showError(message);
+            this.cancelChanges();
+        }
+    }
+
+    function setSGridHeight(grid, height) {
+
+        grid.element.height(height);
+        grid.resize(true);
+    }
+</script>

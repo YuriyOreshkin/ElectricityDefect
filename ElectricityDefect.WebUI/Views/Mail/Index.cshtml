@@ -1,0 +1,35 @@
+﻿@{
+    ViewBag.Title = "Почта";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@(Html.Kendo().TabStrip()
+                        .HtmlAttributes(new { style = " height: calc(95vh);" })
+                        .Name("MailTabStrip")
+
+                        .TabPosition(TabStripTabPosition.Left)
+                        .Items(items =>
+                        {
+                            items.Add().Text("Основные настройки").Selected(true).LoadContentFrom("Settings", "MailSettingsService");
+
+                            items.Add().Text("Шаблон письма").LoadContentFrom("Editor", "TemplateService");
+
+                            items.Add().Text("Расписание").LoadContentFrom(Url.Content("http://10.48.156.167:8088/TaskDirectory/Settings?name=testseti")).ContentHtmlAttributes(new { @class = "k-state-disabled" });
+
+                        })
+                        .Events(ev=>ev.ContentLoad("onError"))
+
+)
+
+<script>
+
+    function onError(e) {
+        var content = $(e.contentElement).text();
+        var error = content.indexOf("Ошибка:") > -1
+
+        if (error) {
+
+            showError(content);
+        }
+    }
+</script>
+

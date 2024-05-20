@@ -1,0 +1,81 @@
+﻿
+@{
+    ViewBag.Title = "Журнал событий";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@(Html.Kendo().Grid<ElectricityDefect.WebUI.Models.IncidentViewModel>
+    ()
+    .Name("incidentsGridView")
+    .Columns(columns =>
+    {
+        columns.Bound(cl => cl.name_ob).Hidden().ClientGroupHeaderTemplate("#= value #  <span class='k-icon k-i-sum'></span>= #=count# ");
+        columns.Group(gr => gr.Title("Период").Columns(grcol =>
+        {
+            grcol.Bound(p => p.begin).Format("{0:dd.MM.yyyy HH:mm}").Width(150).ClientFooterTemplate("Всего: #=count#");
+            grcol.Bound(p => p.end).Format("{0:dd.MM.yyyy HH:mm}").Width(150);
+        }));
+        columns.Bound(cl => cl.n_sh).Width(150);
+        columns.Bound(cl => cl.name_sh).Width(200);
+        columns.Bound(cl => cl.comment);
+        columns.Command(commands=> {  commands.Edit(); commands.Destroy(); }).Width(250);
+    })
+    .Editable(edit => edit.Mode(GridEditMode.PopUp).TemplateName("Incident").Window(wnd => wnd.Events(ev => ev.Open("onPopUpOpen"))))
+    // .Events(ev => ev.Edit("onGridEdit"))
+    .ToolBar(toolbar =>
+    {
+        toolbar.Create().HtmlAttributes(new { @class = "k-primary" });
+        toolbar.Excel();
+
+    })
+    .Sortable()
+    .Scrollable()
+    .Filterable()
+    .Excel(excel => excel.FileName("Журнал событий.xlsx").AllPages(true))
+    .Resizable(col=>col.Columns(true))
+    .DataSource(dataSource => dataSource
+    .Ajax()
+    .Model(model=> {
+        model.Id(id => id.id);
+    })
+    .Events(events => events.Error("error_handler").RequestEnd("onRequestEnd"))
+    .Read(read => read.Action("ReadForGrid", "IncidentService"))
+    .Create(update => update.Action("CreateForGrid", "IncidentService"))
+    .Update(update=>update.Action("UpdateForGrid", "IncidentService"))
+    .Destroy(update => update.Action("DestroyForGrid", "IncidentService"))
+    .Sort(sort=>sort.Add(f=>f.begin).Descending())
+    .Group(group => group.Add(g=> g.name_ob))
+    .Aggregates(aggregates => {
+        aggregates.Add(p => p.name_ob).Count();
+        aggregates.Add(p => p.begin).Count();
+    })
+    )
+    )
+    <script>
+        $(document).ready(function () {
+
+            $(window).resize();
+
+        });
+
+        $(window).resize(function () {
+
+            var height = $(window).outerHeight()-62;
+            var grid = $("#incidentsGridView").data("kendoGrid");
+            setSGridHeight(grid, height);
+        });
+
+        function onPopUpOpen(e) {
+
+            this.wrapper.css({ top: 30 });
+        }
+
+        function onRequestEnd(e) {
+            if (e.type == "update" || e.type == "create") {
+                if (!e.response.Errors) {
+                    e.sender.read();
+                }
+            }
+        }
+
+    </script>

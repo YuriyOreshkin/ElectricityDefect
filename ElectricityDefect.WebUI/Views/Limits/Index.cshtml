@@ -1,0 +1,139 @@
+﻿
+@{
+    ViewBag.Title = "Настройка";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@(Html.Kendo().Grid<ElectricityDefect.WebUI.Models.LimitsSetiViewModel>
+    ()
+    .Name("limitsGridView")
+    .Columns(columns =>
+    {
+        columns.Bound(cl => cl.name_ob).Hidden().ClientGroupHeaderTemplate("#= value # <span class='k-icon k-i-sum'></span>= #=count#");
+        columns.Group(gr => gr.Title("Фидер").Columns(grcol =>
+        {
+            grcol.Bound(p => p.n_sh).Width(200).ClientFooterTemplate("Всего: #=count#");
+            grcol.Bound(p => p.name_sh).Width(300);
+        }));
+        columns.Group(gr => gr.Title("Ua(B)").Columns(grcol =>
+        {
+            grcol.Bound(g => g.uamin);
+            grcol.Bound(g => g.uamax);
+        }));
+        columns.Group(gr => gr.Title("Ub(B)").Columns(grcol =>
+        {
+            grcol.Bound(g => g.ubmin);
+            grcol.Bound(g => g.ubmax);
+        }));
+        columns.Group(gr => gr.Title("Uc(B)").Columns(grcol =>
+        {
+            grcol.Bound(g => g.ucmin);
+            grcol.Bound(g => g.ucmax);
+        }));
+        //columns.ForeignKey(p => p.roleid, (System.Collections.IEnumerable)ViewData["roles"], "Value", "Text").Width(300);
+        columns.Command(commands=> {  commands.Edit(); commands.Destroy(); }).Width(250);
+    })
+    .Editable(edit => edit.Mode(GridEditMode.PopUp).TemplateName("Limits").Window(wnd => wnd.Events(ev => ev.Open("onPopUpOpen"))))
+    //.Events(ev => ev.Save("onGridSave"))
+    .ToolBar(toolbar => {
+        toolbar.Create().HtmlAttributes( new { @class = "k-primary" });
+        toolbar.Excel();
+
+    })
+    .Sortable()
+    .Scrollable()
+    .Filterable()
+    .Excel(excel => excel.FileName("Ограничения по фидерам.xlsx").AllPages(true))
+    .DataSource(dataSource => dataSource
+    .Ajax()
+    .Model(model=> {
+        model.Id(id => id.n_sh);
+    })
+
+    .Events(events => events.Error("error_handler").RequestEnd("onRequestEnd"))
+    .Read(read => read.Action("ReadForGrid", "LimitsService"))
+    .Create(update => update.Action("ModifyForGrid", "LimitsService"))
+    .Update(update=>update.Action("ModifyForGrid", "LimitsService"))
+    .Destroy(update => update.Action("DestroyForGrid", "LimitsService"))
+    .Group(group => group.Add(g=> g.name_ob))
+     .Aggregates(aggregates =>
+     {
+         aggregates.Add(p => p.name_ob).Count();
+         aggregates.Add(p => p.n_sh).Count();
+     })
+    )
+    )
+    <script>
+
+        //Валидация данных
+        (function ($, kendo) {
+            $.extend(true, kendo.ui.validator, {
+                rules: { // custom rules
+                   
+                    maxpersonsvalidation: function (input, params) {
+
+                        if ((input.is("[name='uamax']") || input.is("[name='ubmax']") || input.is("[name='ucmax']")) && input.val() != "") {
+
+                            var numerictextbox = input.data("kendoNumericTextBox");
+                            var val = numerictextbox.value();
+                            var element = $("#uamin");
+                            if (input.is("[name='ubmax']")) {
+
+                                element = $("#ubmin");
+                            }
+                            if (input.is("[name='ucmax']")){
+                                element = $("#ucmin");
+                            }
+                           
+                            var min = element.data("kendoNumericTextBox").value();
+                            
+                            return (val > min);
+                        }
+
+                        return true
+                    }
+
+
+                },
+                messages: {
+                    maxpersonsvalidation: function (input) {
+
+                        return kendo.format("Минимальное значение не должно превышать максимальное!");
+
+                    }
+                }
+
+            });
+        })(jQuery, kendo);
+
+        $(document).ready(function () {
+
+            $(window).resize();
+
+        });
+
+        $(window).resize(function () {
+
+            var height = $(window).outerHeight()-62;
+            var grid = $("#limitsGridView").data("kendoGrid");
+            setSGridHeight(grid, height);
+        });
+
+        function onPopUpOpen(e) {
+
+            this.wrapper.css({ top: 30 });
+        }
+
+        function filterObjekt() {
+            return { n_ob: $("#n_ob").val() }
+        }
+
+
+        function onRequestEnd(e) {
+            if (e.type == "update" || e.type == "create") {
+                if (!e.response.Errors) {
+                    e.sender.read();
+                }
+            }
+        }
+    </script>

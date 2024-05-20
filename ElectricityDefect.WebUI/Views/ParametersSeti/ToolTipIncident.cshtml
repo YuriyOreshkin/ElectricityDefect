@@ -1,0 +1,12 @@
+﻿@model ElectricityDefect.WebUI.Models.IncidentViewModel
+
+<div>
+    @if(Model.id != 0)
+    {
+       <span> @Model.comment</span>
+    }else {
+<span>Событий не обнаружено!</span>
+        <a class="add-incident" onclick="addIncident(@Model.n_sh,'@Model.begin')" href="\\#">Создать</a>
+    }
+</div>
+
